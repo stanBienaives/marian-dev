@@ -17,7 +17,7 @@ public:
   virtual size_t wordsTrg() const { return 0; };
   virtual size_t widthTrg() const { return 0; };
 
-  virtual void debug(){};
+  virtual void debug(bool /*printIndices*/ = false) {};
 
   virtual std::vector<Ptr<Batch>> split(size_t n, size_t sizeLimit = SIZE_MAX) = 0;
 
@@ -26,7 +26,7 @@ public:
 
   virtual void setGuidedAlignment(std::vector<float>&&) = 0;
   virtual void setDataWeights(const std::vector<float>&) = 0;
-
+  virtual ~Batch() {};
 protected:
   std::vector<size_t> sentenceIds_;
 };

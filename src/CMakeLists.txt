@@ -4,9 +4,12 @@ include_directories(.)
 include_directories(3rd_party)
 include_directories(3rd_party/SQLiteCpp/include)
 include_directories(3rd_party/sentencepiece)
+include_directories(3rd_party/fbgemm/include)
 include_directories(${CMAKE_BINARY_DIR}/local/include)
 
 add_library(marian STATIC
+  common/aliases.cpp
+  common/fastopt.cpp
   common/version.cpp
   common/utils.cpp
   common/logging.cpp
@@ -15,13 +18,20 @@ add_library(marian STATIC
   common/config.cpp
   common/config_parser.cpp
   common/config_validator.cpp
+  common/options.cpp
   common/binary.cpp
+  common/build_info.cpp
   common/io.cpp
+  common/filesystem.cpp
+  common/file_stream.cpp
+  common/file_utils.cpp
+  common/types.cpp
 
   data/alignment.cpp
   data/vocab.cpp
   data/default_vocab.cpp
   data/sentencepiece_vocab.cpp
+  data/factored_vocab.cpp
   data/corpus_base.cpp
   data/corpus.cpp
   data/corpus_sqlite.cpp
@@ -31,8 +41,11 @@ add_library(marian STATIC
   3rd_party/cnpy/cnpy.cpp
   3rd_party/ExceptionWithCallStack.cpp
 
+  3rd_party/phf/phf.cc
+
   tensors/backend.cpp
   tensors/rand.cpp
+  tensors/tensor.cpp
   tensors/cpu/device.cpp
   tensors/cpu/prod.cpp
   tensors/cpu/tensor_operators.cpp
@@ -40,6 +53,7 @@ add_library(marian STATIC
   tensors/cpu/sharp/int_gemm.cpp
   tensors/cpu/sharp/avx_gemm.cpp
   tensors/cpu/sharp/sse_gemm.cpp
+  tensors/cpu/fbgemm/packed_gemm.cpp
 
   graph/expression_graph.cpp
   graph/expression_operators.cpp
@@ -48,6 +62,7 @@ add_library(marian STATIC
   graph/node_initializers.cpp
 
   layers/convolution.cpp
+  layers/generic.cpp
   layers/loss.cpp
   layers/weight.cpp
 
@@ -71,13 +86,12 @@ add_library(marian STATIC
   translator/scorers.cpp
 
   training/graph_group_async.cpp
-  training/graph_group_async_drop.cpp
   training/graph_group_sync.cpp
+  training/graph_group.cpp
   training/graph_group_singleton.cpp
-  training/graph_group_multinode.cpp
-  training/graph_group_multinode_sync.cpp
   training/validator.cpp
   training/communicator.cpp
+  training/scheduler.cpp
 
   # this is only compiled to catch build errors, but not linked
   microsoft/quicksand.cpp
@@ -92,10 +106,25 @@ target_compile_options(marian PUBLIC ${ALL_WARNINGS})
 # Generate git_revision.h to reflect current git revision information
 # [https://stackoverflow.com/questions/1435953/how-can-i-pass-git-sha1-to-compiler-as-definition-using-cmake]
 # Git updates .git/logs/HEAD file whenever you pull or commit something.
+
+# If Marian is checked out as a submodule in another repository,
+# there's no .git directory in ${CMAKE_SOURCE_DIR}. Instead .git is a
+# file that specifies the relative path from ${CMAKE_SOURCE_DIR} to
+# ./git/modules/<MARIAN_ROOT_DIR> in the root of the repository that
+# contains Marian as a submodule. We set MARIAN_GIT_DIR to the appropriate
+# path, depending on whether ${CMAKE_SOURCE_DIR}/.git is a directory or file.
+if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git) # not a submodule
+  set(MARIAN_GIT_DIR ${CMAKE_SOURCE_DIR}/.git)
+else(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+  file(READ ${CMAKE_SOURCE_DIR}/.git MARIAN_GIT_DIR)
+  string(REGEX REPLACE "gitdir: (.*)\n" "\\1" MARIAN_GIT_DIR ${MARIAN_GIT_DIR})
+  get_filename_component(MARIAN_GIT_DIR "${CMAKE_SOURCE_DIR}/${MARIAN_GIT_DIR}" ABSOLUTE)
+endif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/common/git_revision.h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   COMMAND git log -1 --pretty=format:\#define\ GIT_REVISION\ \"\%h\ \%ai\" > ${CMAKE_CURRENT_SOURCE_DIR}/common/git_revision.h
-  DEPENDS ${CMAKE_SOURCE_DIR}/.git/logs/HEAD
+  DEPENDS ${MARIAN_GIT_DIR}/logs/HEAD
   VERBATIM
 )
 add_custom_target(marian_version DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/common/git_revision.h)
@@ -110,12 +139,11 @@ cuda_add_library(marian_cuda
   tensors/gpu/prod.cpp
   tensors/gpu/element.cu
   tensors/gpu/add.cu
+  tensors/gpu/add_all.cu
   tensors/gpu/tensor_operators.cu
   tensors/gpu/cudnn_wrappers.cu
   translator/nth_element.cu
   translator/helpers.cu
-  training/gradient_dropping/gpu/dropper.cu
-  training/gradient_dropping/gpu/sparse_algorithm.cu
   STATIC)
 
   target_compile_options(marian_cuda PUBLIC ${ALL_WARNINGS})
@@ -190,6 +218,10 @@ if(COMPILE_SERVER)
   set(EXECUTABLES ${EXECUTABLES} marian_server)
 endif(COMPILE_SERVER)
 
+if(APPLE) # This is a dependency of pathie but I can't seem to link it into that CMakeLists because we're not compiling it as a library.
+   set(EXT_LIBS ${EXT_LIBS} iconv)
+endif()
+
 foreach(exec ${EXECUTABLES})
   target_link_libraries(${exec} marian ${EXT_LIBS} ${EXT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
   if(CUDA_FOUND)
@@ -197,13 +229,6 @@ foreach(exec ${EXECUTABLES})
   endif(CUDA_FOUND)
   set_target_properties(${exec} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 endforeach(exec)
-
-#add_executable(
-#  align2steps
-#  tools/align2steps.cpp
-#)
-
-#set_target_properties(align2steps PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 if(COMPILE_TESTS)
   set(CATCH_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)

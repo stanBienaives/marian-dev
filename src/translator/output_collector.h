@@ -11,6 +11,7 @@ namespace marian {
 
 class PrintingStrategy {
 public:
+  virtual ~PrintingStrategy() {}
   virtual bool shouldBePrinted(long) = 0;
 };
 
@@ -74,7 +75,7 @@ protected:
   typedef std::map<long, std::pair<std::string, std::string>> Outputs;
   Outputs outputs_;
   long nextId_;
-  UPtr<io::OutputFileStream> outStrm_;
+  UPtr<std::ostream> outStrm_;
   Ptr<PrintingStrategy> printing_;
   std::mutex mutex_;
 };

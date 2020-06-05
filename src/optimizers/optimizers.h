@@ -29,6 +29,8 @@ public:
       LOG(info, "[optimizers] Learning rate gets automatically adjusted as if minibatch size was {}", refMBWordsParam_);
   }
 
+  virtual ~OptimizerBase() {}
+
   static constexpr size_t mbSizeNotProvided = SIZE_MAX;
 
   void update(Ptr<ExpressionGraph> graph, size_t mbSize = mbSizeNotProvided) {
@@ -40,7 +42,7 @@ public:
 
   void update(Tensor params, Tensor grads, size_t mbSize = mbSizeNotProvided) {
     if(clipper_)
-      clipper_->clip(grads);
+      clipper_->clip(grads); //@BUGBUG: take into account actual mini-batch size since gradients are not normalized
 
     size_t refMBWords = refMBWordsParam_;
     if (refMBWords == 0) { // optimizer not configured to use hyper-parameter auto-adjustment
@@ -114,7 +116,7 @@ class Sgd : public OptimizerBase {
 public:
   Sgd(float eta, size_t refMBWordsParam = 0, Ptr<ClipperBase> clipper = nullptr)
       : OptimizerBase(eta, refMBWordsParam, clipper) {}
-
+  virtual ~Sgd() {}
   virtual void setParams(const std::vector<float>& /*params*/) override {}
 private:
   void updateImpl(Tensor params, Tensor grads, size_t actualMBSize, size_t refMBWords) override;

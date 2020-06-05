@@ -16,7 +16,7 @@ public:
 protected:
   bool first_{true};
 
-  std::vector<Ptr<models::ModelBase>> builders_;
+  std::vector<Ptr<models::ICriterionFunction>> builders_;
   std::vector<Ptr<ExpressionGraph>> graphs_;
   std::vector<DeviceId> devices_;
 
@@ -64,7 +64,7 @@ public:
   void save(Ptr<ExpressionGraph>, bool final = false);
 
   // @TODO: give it a fake batch generator which own vocabs instead of passing vocabs
-  Ptr<data::BatchStats> collectStats(const std::vector<Ptr<Vocab>>& vocabs) {
+  virtual Ptr<data::BatchStats> collectStats(const std::vector<Ptr<Vocab>>& vocabs) {
     return GraphGroup::collectStats(graphs_[0], builders_[0], vocabs);
   }
 
