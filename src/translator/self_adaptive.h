@@ -74,7 +74,7 @@ public:
     graph_ = New<ExpressionGraph>();
     graph_->setDevice(deviceId);
     graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
-    builder_ = models::from_options(options_, models::usage::training);
+    builder_ = models::createModelFromOptions(options_, models::usage::training);
 
     optimizer_ = Optimizer(options_);
 
@@ -82,7 +82,7 @@ public:
     Ptr<Options> opts = New<Options>();
     opts->merge(options_);
     opts->set("inference", true);
-    builderTrans_ = models::from_options(opts, models::usage::translation);
+    builderTrans_ = models::createModelFromOptions(opts, models::usage::translation);
 
     // Initialize a scorer for translation
     auto model = options_->get<std::string>("model");
@@ -119,7 +119,7 @@ public:
 
     // Prepare batches
     auto testBatches = New<BatchGenerator<TextInput>>(testSet, optionsTrans_);
-    testBatches->prepare(false);
+    testBatches->prepare();
 
     // Initialize output printing
     auto collector = New<StringCollector>();
@@ -161,7 +161,7 @@ public:
 
     // Prepare batches
     auto testBatches = New<BatchGenerator<Corpus>>(testSet, optionsTrans_);
-    testBatches->prepare(false);
+    testBatches->prepare();
 
     // Initialize output printing
     auto collector = New<OutputCollector>(options_->get<std::string>("output"));
@@ -191,8 +191,8 @@ private:
   Ptr<Options> options_;       // Options for training
   Ptr<Options> optionsTrans_;  // Options for translator
 
-  Ptr<models::ModelBase> builder_;      // Training model
-  Ptr<models::ModelBase> builderTrans_; // Translation model
+  Ptr<models::IModel> builder_;      // Training model
+  Ptr<models::IModel> builderTrans_; // Translation model
   Ptr<ExpressionGraph> graph_;          // A graph with original parameters
   Ptr<ExpressionGraph> graphAdapt_;     // A graph on which training is performed
 
@@ -213,7 +213,7 @@ private:
 
     scheduler->started();
     while(scheduler->keepGoing()) {
-      trainBatches->prepare(false);
+      trainBatches->prepare();
 
       for(auto batch : *trainBatches) {
         if(!scheduler->keepGoing())
@@ -266,7 +266,7 @@ private:
         std::stringstream best1;
         std::stringstream bestn;
         printer->print(history, best1, bestn);
-        collector->Write(history->GetLineNum(),
+        collector->Write(history->getLineNum(),
                          best1.str(),
                          bestn.str(),
                          options_->get<bool>("n-best"));

@@ -151,10 +151,9 @@ void ConfigParser::addOptionsGeneral(cli::CLIWrapper& cli) {
 void ConfigParser::addOptionsServer(cli::CLIWrapper& cli) {
   // clang-format off
   auto previous_group = cli.switchGroup("Server options");
-  size_t defaultPort = modeServer_ ? 8080 : 0;
   cli.add<size_t>("--port,-p",
       "Port number for web socket server",
-      defaultPort);
+      8080);
   cli.switchGroup(previous_group);
   // clang-format on
 }

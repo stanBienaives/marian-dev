@@ -51,7 +51,7 @@ CorpusBase::CorpusBase(const std::vector<std::string>& paths,
 
   for(auto path : paths_) {
     if(path == "stdin")
-      files_.emplace_back(new io::InputFileStream(std::cin));
+      files_.emplace_back(new std::istream(std::cin.rdbuf()));
     else {
       UPtr<io::InputFileStream> strm(new io::InputFileStream(path));
       ABORT_IF(strm->empty(), "File '{}' is empty", path);
