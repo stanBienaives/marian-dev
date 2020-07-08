@@ -174,10 +174,7 @@ add_executable(marian_conv command/marian_conv.cpp)
 set_target_properties(marian_conv PROPERTIES OUTPUT_NAME marian-conv)
 target_compile_options(marian_conv PUBLIC ${ALL_WARNINGS})
 
-add_executable(marian_adaptive command/marian_adaptive.cpp)
-set_target_properties(marian_adaptive PROPERTIES OUTPUT_NAME marian-adaptive)
-
-set(EXECUTABLES ${EXECUTABLES} marian_train marian_decoder marian_scorer marian_vocab marian_conv marian_adaptive)
+set(EXECUTABLES ${EXECUTABLES} marian_train marian_decoder marian_scorer marian_vocab marian_conv)
 
 # marian.zip and marian.tgz
 # This combines marian, marian_decoder in a single ZIP or TAR file for
@@ -217,6 +214,13 @@ if(COMPILE_SERVER)
   target_compile_options(marian_server PUBLIC ${ALL_WARNINGS})
   set(EXECUTABLES ${EXECUTABLES} marian_server)
 endif(COMPILE_SERVER)
+
+if(COMPILE_ADAPTIVE)
+  add_executable(marian_adaptive command/marian_adaptive.cpp)
+  set_target_properties(marian_adaptive PROPERTIES OUTPUT_NAME marian-adaptive)
+  set(EXECUTABLES ${EXECUTABLES} marian_adaptive)
+endif(COMPILE_ADAPTIVE)
+
 
 if(APPLE) # This is a dependency of pathie but I can't seem to link it into that CMakeLists because we're not compiling it as a library.
    set(EXT_LIBS ${EXT_LIBS} iconv)
