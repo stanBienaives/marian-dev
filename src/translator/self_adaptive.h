@@ -74,7 +74,7 @@ public:
     graph_ = New<ExpressionGraph>();
     graph_->setDevice(deviceId);
     graph_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
-    builder_ = models::createModelFromOptions(options_, models::usage::training);
+    builder_ = models::createCriterionFunctionFromOptions(options_, models::usage::training);
 
     optimizer_ = Optimizer(options_);
 
@@ -191,7 +191,7 @@ private:
   Ptr<Options> options_;       // Options for training
   Ptr<Options> optionsTrans_;  // Options for translator
 
-  Ptr<models::IModel> builder_;      // Training model
+  Ptr<models::ICriterionFunction> builder_;      // Training model
   Ptr<models::IModel> builderTrans_; // Translation model
   Ptr<ExpressionGraph> graph_;          // A graph with original parameters
   Ptr<ExpressionGraph> graphAdapt_;     // A graph on which training is performed
