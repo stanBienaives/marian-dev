@@ -258,8 +258,7 @@ private:
     {
       auto search = New<BeamSearch>(options_,
                                     scorers_,
-                                    vocabs_.back()->getEosId(),
-                                    vocabs_.back()->getUnkId());
+                                    vocabs_.back());
       auto histories = search->search(graph, batch);
 
       for(auto history : histories) {
