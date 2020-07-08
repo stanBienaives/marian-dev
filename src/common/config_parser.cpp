@@ -652,11 +652,15 @@ void ConfigParser::addOptionsTranslation(cli::CLIWrapper& cli) {
       "Optimize speed aggressively sacrificing memory or precision");
   cli.add<bool>("--skip-cost",
       "Ignore model cost during translation, not recommended for beam-size > 1");
-  cli.add<bool>("--fp16",
-      "Shortcut for mixed precision inference with float16, corresponds to: --precision float16");
-  cli.add<std::vector<std::string>>("--precision",
-      "Mixed precision for inference, set parameter type in expression graph",
-      {"float32"});
+  // these have already been included in training options and marian-adaptive includes both
+  // so there's overlap
+  if(mode_ != cli::mode::selfadaptive) {
+    cli.add<bool>("--fp16",
+        "Shortcut for mixed precision inference with float16, corresponds to: --precision float16");
+    cli.add<std::vector<std::string>>("--precision",
+        "Mixed precision for inference, set parameter type in expression graph",
+        {"float32"});
+  }
 
   cli.add<std::vector<std::string>>("--shortlist",
      "Use softmax shortlist: path first best prune");
