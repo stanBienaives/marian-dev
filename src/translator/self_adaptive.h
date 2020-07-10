@@ -62,6 +62,9 @@ class TrainSelfAdaptive : public ModelTask, public ModelServiceTask {
 public:
   TrainSelfAdaptive(Ptr<Options> options) : options_(options) {
 
+    // @TODO: should probably better re-enable the shuffling related options
+    // in config for marian-adaptive
+    options_->set("shuffle", "none");
     // Set up translator options
     optionsTrans_ = New<Options>(options_->clone());
     optionsTrans_->set<size_t>("mini-batch", 1);
