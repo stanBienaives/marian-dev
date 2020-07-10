@@ -67,6 +67,7 @@ public:
     optionsTrans_->set<size_t>("mini-batch", 1);
     optionsTrans_->set<size_t>("maxi-batch", 1);
     optionsTrans_->set<size_t>("max-length", 1000);
+    optionsTrans_->set("shuffle", "none");
 
     auto deviceId = Config::getDevices(options_)[0];
 

@@ -386,23 +386,25 @@ void ConfigParser::addOptionsTraining(cli::CLIWrapper& cli) {
   addSuboptionsTSV(cli);
 
   // data management options
-  cli.add<std::string>("--shuffle",
-      "How to shuffle input data (data: shuffles data and sorted batches; batches: "
-      "data is read in order into batches, but batches are shuffled; none: no shuffling). "
-      "Use with '--maxi-batch-sort none' in order to achieve exact reading order", "data");
-  cli.add<bool>("--no-shuffle",
-      "Shortcut for backwards compatiblity, equivalent to --shuffle none (deprecated)");
-  cli.add<bool>("--no-restore-corpus",
-      "Skip restoring corpus state after training is restarted");
-  cli.add<std::string>("--tempdir,-T",
-      "Directory for temporary (shuffled) files and database",
-      "/tmp");
-  cli.add<std::string>("--sqlite",
-      "Use disk-based sqlite3 database for training corpus storage, default"
-      " is temporary with path creates persistent storage")
-    ->implicit_val("temporary");
-  cli.add<bool>("--sqlite-drop",
-      "Drop existing tables in sqlite3 database");
+  if (mode_ != cli::mode::selfadaptive) {
+    cli.add<std::string>("--shuffle",
+        "How to shuffle input data (data: shuffles data and sorted batches; batches: "
+        "data is read in order into batches, but batches are shuffled; none: no shuffling). "
+        "Use with '--maxi-batch-sort none' in order to achieve exact reading order", "data");
+    cli.add<bool>("--no-shuffle",
+        "Shortcut for backwards compatiblity, equivalent to --shuffle none (deprecated)");
+    cli.add<bool>("--no-restore-corpus",
+        "Skip restoring corpus state after training is restarted");
+    cli.add<std::string>("--tempdir,-T",
+        "Directory for temporary (shuffled) files and database",
+        "/tmp");
+    cli.add<std::string>("--sqlite",
+        "Use disk-based sqlite3 database for training corpus storage, default"
+        " is temporary with path creates persistent storage")
+      ->implicit_val("temporary");
+    cli.add<bool>("--sqlite-drop",
+        "Drop existing tables in sqlite3 database");
+  }
 
   addSuboptionsDevices(cli);
   addSuboptionsBatching(cli);
