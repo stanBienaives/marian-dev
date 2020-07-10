@@ -786,7 +786,7 @@ void ConfigParser::addSuboptionsBatching(cli::CLIWrapper& cli) {
       "Sorting strategy for maxi-batch: none, src, trg (not available for decoder)",
       defaultMaxiBatchSort);
 
-  if(mode_ == cli::mode::training) {
+  if(mode_ == cli::mode::training || mode_ == cli::mode::selfadaptive) {
     cli.add<bool>("--shuffle-in-ram",
         "Keep shuffled corpus in RAM, do not write to temp file");
     // @TODO: Consider making the next two options options of the vocab instead, to make it more local in scope.
