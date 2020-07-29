@@ -72,6 +72,11 @@ public:
     optionsTrans_->set<size_t>("max-length", 1000);
     optionsTrans_->set("shuffle", "none");
 
+    auto deviceId = Config::getDevices(options_)[0];
+    graphAdapt_ = New<ExpressionGraph>();
+    graphAdapt_->setDevice(deviceId);
+    graphAdapt_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
+
     // auto deviceId = Config::getDevices(options_)[0];
 
     // Initialize model for training
@@ -228,10 +233,10 @@ private:
         LOG(info, "### NEW BATCH");
         // Copy params from the original model
         if(first) {
-          auto deviceId = Config::getDevices(options_)[0];
-          graphAdapt_ = New<ExpressionGraph>();
-          graphAdapt_->setDevice(deviceId);
-          graphAdapt_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
+          // auto deviceId = Config::getDevices(options_)[0];
+          // graphAdapt_ = New<ExpressionGraph>();
+          // graphAdapt_->setDevice(deviceId);
+          // graphAdapt_->reserveWorkspaceMB(options_->get<size_t>("workspace"));
 
           // builder_->build(graph_, batch);
           // graph_->forward();
