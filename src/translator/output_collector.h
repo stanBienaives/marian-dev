@@ -82,7 +82,7 @@ protected:
 
 class StringCollector : public CollectorBase {
 public:
-  StringCollector();
+  StringCollector(bool quiet = false);
   StringCollector(const StringCollector&) = delete;
 
   void Write(long sourceId,
@@ -93,7 +93,8 @@ public:
   std::vector<std::string> collect(bool nbest);
 
 protected:
-  long maxId_;
+  long maxId_;  // the largest index of the translated source sentences
+  bool quiet_;  // if true do not log best translations
   std::mutex mutex_;
 
   typedef std::map<long, std::pair<std::string, std::string>> Outputs;

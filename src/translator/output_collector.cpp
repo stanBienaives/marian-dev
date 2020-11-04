@@ -79,14 +79,15 @@ void OutputCollector::Write(long sourceId,
   }
 }
 
-StringCollector::StringCollector() : maxId_(-1) {}
+StringCollector::StringCollector(bool quiet /*=false*/) : maxId_(-1), quiet_(quiet) {}
 
 void StringCollector::Write(long sourceId,
                             const std::string& best1,
                             const std::string& bestn,
                             bool) {
   std::lock_guard<std::mutex> lock(mutex_);
-  LOG(info, "Best translation {} : {}", sourceId, best1);
+  if(!quiet_)
+    LOG(info, "Best translation {} : {}", sourceId, best1);
   outputs_[sourceId] = std::make_pair(best1, bestn);
   if(maxId_ <= sourceId)
     maxId_ = sourceId;
