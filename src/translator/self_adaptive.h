@@ -139,7 +139,7 @@ public:
     size_t id = 0;
     for(auto testBatch : *testBatches) {
       if(contexts.size() > id && !contexts[id].empty()) {
-        train(contexts[id]);
+        // train(contexts[id]);
         translate(testBatch, collector, printer, graphAdapt_);
       } else {
         LOG(info, "No context provided for sentence {}", id);
@@ -179,14 +179,20 @@ public:
 
     LOG(info, "Running...");
 
+    // auto state = New<TrainingState>(options_->get<float>("learn-rate"));
+    // auto scheduler = New<Scheduler>(options_, state);
+    // scheduler->registerTrainingObserver(scheduler);
+    // scheduler->registerTrainingObserver(optimizer_);
+
     for(auto testBatch : *testBatches) {
-      LOG(info, "### NEW TEST BATCH");
       auto trainSet = trainSets->getSamples();
 
       if(!trainSet.empty()) {
-        train(trainSet);
+        LOG(info, "### NEW TEST BATCH");
+        train(trainSet, nullptr);
         translate(testBatch, collector, printer, graphAdapt_);
       } else {
+        LOG(info, "### EMPTY TEST BATCH");
         // translate(testBatch, collector, printer, graph_);
       }
     }
@@ -205,7 +211,7 @@ private:
   // std::vector<Ptr<Scorer>> scorers_;
   Ptr<OptimizerBase> optimizer_;
 
-  void train(std::vector<std::string> trainSents) {
+  void train(std::vector<std::string> trainSents, std::shared_ptr<Scheduler> _scheduler) {
     auto state = New<TrainingState>(options_->get<float>("learn-rate"));
     auto scheduler = New<Scheduler>(options_, state);
     scheduler->registerTrainingObserver(scheduler);
