@@ -73,7 +73,7 @@ public:
     named_[name] = p;
   }
 
-  void moveMemoryIn(std::vector<MemoryPiece::PtrType> &mem, std::vector<std::string> &names) {
+  void moveMemoryIn(std::vector<MemoryPiece::PtrType> &mem, std::vector<std::string> &names, Ptr<Allocator> allocator, Ptr<Backend> backend) {
     // I'd have preffered to clear the params_ as well here, but that would require
     // recreating the Expr objects here. I don't know how safe/feasible it is to do
     // here so i've opted to re-use the Expr objects by only changing the memory
@@ -81,6 +81,8 @@ public:
     named_.clear();
     vals_->clear();
     grads_->clear();
+
+    vals_ = New<TensorAllocator>(backend, allocator);
 
     auto write_it = begin();
     auto read_it  = mem.begin();

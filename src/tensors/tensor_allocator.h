@@ -28,6 +28,10 @@ public:
       : backend_(backend),
         allocator_(New<Allocator>(backend_->getDeviceId(), device, 0, GROW, ALIGN)) {}
 
+  TensorAllocator(Ptr<Backend> backend, Ptr<Allocator> allocator)
+      : backend_(backend),
+        allocator_(allocator) {}
+
   ~TensorAllocator() { clear(); }
 
   void throwAtReallocation(bool throwRealloc) {

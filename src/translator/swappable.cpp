@@ -78,7 +78,7 @@ GPUEngineTrain::GPUEngineTrain(Ptr<Options> options, size_t deviceIdx)
     : options_(options),
       graph_(New<ExpressionGraph>()),
       myDeviceId_(LookupGPU(options, deviceIdx)),
-      allocator_(myDeviceId_, 0, 128 * 1048576) {
+      allocator_(New<Allocator>(myDeviceId_, 0, 128 * 1048576)) {
   ABORT_IF(myDeviceId_.type == DeviceType::cpu, "Swappable slot only works for GPU devices.");
   options_->set("inference", false);
   options_->set("shuffle", "none");
@@ -110,13 +110,13 @@ GPULoadedModelTrain::GPULoadedModelTrain(Ptr<GPUEngineTrain> gpu) : engine_(gpu)
 
 void GPULoadedModelTrain::AllocateParamsLike(const CPULoadedModel &from) {
   for (auto &param : from.Parameters()) {
-    parameters_.push_back(engine_->allocator_.alloc(param.size()));
+    parameters_.push_back(engine_->allocator_->alloc(param.size()));
   }
 }
 
 GPULoadedModelTrain::~GPULoadedModelTrain() {
   for (MemoryPiece::PtrType &p : parameters_) {
-    engine_->allocator_.free(p);
+    engine_->allocator_->free(p);
   }
 }
 
@@ -191,7 +191,7 @@ void GPULoadedModelTrain::Train(const std::vector<std::string> &input) {
         std::vector<uint8_t> outvec;
         get(outvec, parameters_[0], engine_->graph_->getBackend());
         // engine_->SwapPointers(parameters_);
-        engine_->graph_->params()->moveMemoryIn(parameters_, names_);
+        engine_->graph_->params()->moveMemoryIn(parameters_, names_, engine_->allocator_, engine_->graph_->getBackend());
         get(outvec, parameters_[0], engine_->graph_->getBackend());
         first = false;
       }
