@@ -74,8 +74,11 @@ void GPUEngineTrain::Initialize(Ptr<data::Batch> batch) {
   }
 }
 
-GPUEngineTrain::GPUEngineTrain(Ptr<Options> options, size_t deviceIdx) 
-  : options_(options), graph_(New<ExpressionGraph>()), myDeviceId_(LookupGPU(options, deviceIdx)), allocator_(myDeviceId_, 0, 128 * 1048576) {
+GPUEngineTrain::GPUEngineTrain(Ptr<Options> options, size_t deviceIdx)
+    : options_(options),
+      graph_(New<ExpressionGraph>()),
+      myDeviceId_(LookupGPU(options, deviceIdx)),
+      allocator_(myDeviceId_, 0, 128 * 1048576) {
   ABORT_IF(myDeviceId_.type == DeviceType::cpu, "Swappable slot only works for GPU devices.");
   options_->set("inference", false);
   options_->set("shuffle", "none");
@@ -131,8 +134,14 @@ void GPULoadedModelTrain::Load(const GPULoadedModelTrain &from) {
 void GPULoadedModelTrain::Load(const CPULoadedModel &from) {
   srcVocabs_ = from.SrcVocabs();
   trgVocab_ = from.TrgVocab();
+  names_.resize(parameters_.size());
   for (size_t i = 0; i < parameters_.size(); ++i) {
     swapper::copyCpuToGpu(reinterpret_cast<char*>(parameters_[i]->data()), from.Parameters()[i].data(), from.Parameters()[i].size(), engine_->myDeviceId_);
+    std::string name = from.Parameters()[i].name;
+    if (name.rfind("F0::", 0) == 0) { // i guess this check isn't needed because the names are always constructed this way
+      name = name.substr(4);
+    }
+    names_[i] = name;
   }
 }
 
@@ -181,7 +190,8 @@ void GPULoadedModelTrain::Train(const std::vector<std::string> &input) {
         engine_->Initialize(batch);
         std::vector<uint8_t> outvec;
         get(outvec, parameters_[0], engine_->graph_->getBackend());
-        engine_->SwapPointers(parameters_);
+        // engine_->SwapPointers(parameters_);
+        engine_->graph_->params()->moveMemoryIn(parameters_, names_);
         get(outvec, parameters_[0], engine_->graph_->getBackend());
         first = false;
       }
@@ -206,7 +216,8 @@ void GPULoadedModelTrain::Train(const std::vector<std::string> &input) {
   if(!first) {
     std::vector<uint8_t> outvec;
     get(outvec, parameters_[0], engine_->graph_->getBackend());
-    engine_->SwapPointers(parameters_);
+    // engine_->SwapPointers(parameters_);
+    engine_->graph_->params()->moveMemoryOut(parameters_);
     get(outvec, parameters_[0], engine_->graph_->getBackend());
     // does nothing, need a place for a breakpoint
     first = false;

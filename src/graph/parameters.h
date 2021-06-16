@@ -73,6 +73,34 @@ public:
     named_[name] = p;
   }
 
+  void moveMemoryIn(std::vector<MemoryPiece::PtrType> &mem, std::vector<std::string> &names) {
+    // I'd have preffered to clear the params_ as well here, but that would require
+    // recreating the Expr objects here. I don't know how safe/feasible it is to do
+    // here so i've opted to re-use the Expr objects by only changing the memory
+    // they're pointing to.
+    named_.clear();
+    vals_->clear();
+    grads_->clear();
+
+    auto write_it = begin();
+    auto read_it  = mem.begin();
+    auto read_it_names = names.begin();
+
+      for(; read_it != mem.end(); ++write_it, ++read_it, ++read_it_names) {
+        *(*write_it)->val()->memory() = std::move(**read_it);
+        named_[*read_it_names] = *write_it;
+      }
+  }
+
+  void moveMemoryOut(std::vector<MemoryPiece::PtrType> &to) {
+    auto write_it      = to.begin();
+    auto read_it       = begin();
+
+    for(; read_it != end(); ++write_it, ++read_it) {
+      **write_it = std::move(*(*read_it)->val()->memory());
+    }
+  }
+
   virtual void init(Ptr<Backend> backend) {
     vals_ = New<TensorAllocator>(backend);
     grads_ = New<TensorAllocator>(backend);

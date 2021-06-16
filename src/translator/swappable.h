@@ -37,17 +37,17 @@ private:
 
   void Initialize(Ptr<data::Batch> batch);
   void SwapPointers(std::vector<MemoryPiece::PtrType> &with);
-
-public:
-  /**
+  // void SwapPointers(std::vector<MemoryPiece::PtrType> &with, std::vector<std::string> &with_names);
+  public:
+    /**
     * @param options The marian options object
     * @param deviceNum The index of the device you want to use for this slot. Note that this is not the deviceID but the index of the device in the
     *                  array of supplied devices. Eg if you provide -d 0 3 5 and you want the Slot to run on GPU 3, you provide deviceNum=1.
     */
-  explicit GPUEngineTrain(Ptr<Options> options, size_t deviceNum);
+    explicit GPUEngineTrain(Ptr<Options> options, size_t deviceNum);
 
-  ~GPUEngineTrain();
-};
+    ~GPUEngineTrain();
+  };
 
 /* A model loaded on the GPU that can be overwritten from CPU or GPU. */
 class GPULoadedModelTrain {
@@ -57,6 +57,7 @@ class GPULoadedModelTrain {
     Ptr<GPUEngineTrain> engine_;
 
     std::vector<MemoryPiece::PtrType> parameters_;
+    std::vector<std::string> names_;
     std::vector<Ptr<Vocab>> srcVocabs_;
     Ptr<Vocab> trgVocab_;
 
