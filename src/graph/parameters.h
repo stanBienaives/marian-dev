@@ -101,6 +101,15 @@ public:
     }
   }
 
+  std::vector<MemoryPiece::PtrType> toMemoryPieces() {
+    std::vector<MemoryPiece::PtrType> res(params_.size());
+    auto read_it = begin();
+    for(; read_it != end(); ++read_it) {
+      res.push_back((*read_it)->val()->memory());
+    }
+    return res;
+  }
+
   virtual void init(Ptr<Backend> backend) {
     vals_ = New<TensorAllocator>(backend);
     grads_ = New<TensorAllocator>(backend);

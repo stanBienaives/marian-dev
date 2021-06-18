@@ -742,8 +742,17 @@ public:
   bool getThrowNaN() { return throwNaN_; }
 
 public:
+  void setParams(const Ptr<Parameters> params, bool markReloaded = true) {
+    // TODO: Don't know if there can be other element types than the defaultElementType_
+    // and, if so, what to do about it
+    paramsByElementType_[defaultElementType_] = params;
+    // Don't know what's it for. Just copying what load() does
+    if(markReloaded)
+      setReloaded(true);
+  }
+
   /** Load model (mainly parameter objects) from array of io::Items */
-  void load(std::vector<io::Item>& ioItems, bool markReloaded = true) {
+  void load(const std::vector<io::Item>& ioItems, bool markReloaded = true) {
     setReloaded(false);
     for(auto& item : ioItems) {
       std::string pName = item.name;

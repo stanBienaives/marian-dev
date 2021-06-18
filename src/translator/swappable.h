@@ -56,7 +56,8 @@ class GPULoadedModelTrain {
 
     Ptr<GPUEngineTrain> engine_;
 
-    std::vector<MemoryPiece::PtrType> parameters_;
+    Ptr<Parameters> parameters_;
+    Ptr<ExpressionGraph> throwawayGraph_;
     std::vector<std::string> names_;
     std::vector<Ptr<Vocab>> srcVocabs_;
     Ptr<Vocab> trgVocab_;
@@ -72,7 +73,7 @@ class GPULoadedModelTrain {
 
     // Overwrite this model with parameters from a different one.
     void Load(const CPULoadedModel &from);
-    void Load(const GPULoadedModelTrain &from);
+    // void Load(const GPULoadedModelTrain &from);
     void AllocateParamsLike(const CPULoadedModel &from);
 
     void Train(const std::vector<std::string> &input);
@@ -130,7 +131,7 @@ class GPULoadedModel {
     // Overwrite this model with parameters from a different one.
     void Load(const CPULoadedModel &from);
     void Load(const GPULoadedModel &from);
-    void Load(const GPULoadedModelTrain &from);
+    // void Load(const GPULoadedModelTrain &from);
     void PointToParams(const GPULoadedModelTrain &from);
 
     Histories Translate(const std::vector<std::string> &input);
@@ -149,6 +150,7 @@ class CPULoadedModel {
     CPULoadedModel(Ptr<Options> options, const std::string &parameters, const std::vector<std::string> &sourceVocabPaths, const std::string &targetVocabPath);
 
     const std::vector<io::Item> &Parameters() const { return parameters_; }
+    std::vector<io::Item> ParametersNonConst() const { return parameters_; }
 
     const std::vector<Ptr<Vocab>> &SrcVocabs() const { return srcVocabs_; }
 
