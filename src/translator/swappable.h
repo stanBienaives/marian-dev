@@ -56,8 +56,9 @@ class GPULoadedModelTrain {
 
     Ptr<GPUEngineTrain> engine_;
 
-    Ptr<Parameters> parameters_;
-    Ptr<ExpressionGraph> throwawayGraph_;
+    // Ptr<Parameters> parameters_;
+    std::vector<io::Item> parameters_;
+    // Ptr<ExpressionGraph> throwawayGraph_;
     std::vector<std::string> names_;
     std::vector<Ptr<Vocab>> srcVocabs_;
     Ptr<Vocab> trgVocab_;

@@ -135,10 +135,10 @@ void GPULoadedModelTrain::Load(const CPULoadedModel &from) {
   srcVocabs_ = from.SrcVocabs();
   trgVocab_ = from.TrgVocab();
 
-  throwawayGraph_ = New<ExpressionGraph>(false);
-  throwawayGraph_->setDevice(engine_->myDeviceId_);
-  throwawayGraph_->load(from.Parameters(), true);
-  parameters_ = throwawayGraph_->params();
+  // throwawayGraph_ = New<ExpressionGraph>(false);
+  // throwawayGraph_->setDevice(engine_->myDeviceId_);
+  // throwawayGraph_->load(from.Parameters(), true);
+  parameters_ = from.Parameters();
 
   // TODO: check if names_ are still needed anywhere. parameters_ already contains names
   // but it's not ordered
@@ -199,8 +199,9 @@ void GPULoadedModelTrain::Train(const std::vector<std::string> &input) {
         // get(outvec, parameters_[0], engine_->graph_->getBackend());
         // engine_->SwapPointers(parameters_);
         // TODO: figure out the setReloaded param here
-        engine_->graph_->clear();
-        engine_->graph_->setParams(parameters_, false);
+        // engine_->graph_->clear();
+        // engine_->graph_->setParams(parameters_, false);
+        engine_->graph_->load(parameters_);
         // get(outvec, parameters_[0], engine_->graph_->getBackend());
         first = false;
       }
@@ -226,7 +227,7 @@ void GPULoadedModelTrain::Train(const std::vector<std::string> &input) {
     std::vector<uint8_t> outvec;
     // get(outvec, parameters_[0], engine_->graph_->getBackend());
     // engine_->SwapPointers(parameters_);
-    parameters_ = engine_->graph_->params();
+    // parameters_ = engine_->graph_->params();
     // get(outvec, parameters_[0], engine_->graph_->getBackend());
     // does nothing, need a place for a breakpoint
     first = false;
@@ -314,7 +315,8 @@ void GPULoadedModel::PointToParams(const GPULoadedModelTrain &from) {
   ABORT_IF(engine_->myDeviceId_ != from.engine_->myDeviceId_, "TODO: copy across GPUs.");
   srcVocabs_ = from.srcVocabs_;
   trgVocab_  = from.trgVocab_;
-  parameters_ = from.parameters_->toMemoryPieces();
+  // parameters_ = from.parameters_->toMemoryPieces();
+  parameters_ = from.engine_->graph_->params()->toMemoryPieces();
 }
 
 void GPULoadedModel::Load(const CPULoadedModel &from) {
