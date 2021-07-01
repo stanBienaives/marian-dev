@@ -116,6 +116,7 @@ class GPULoadedModel {
     Ptr<GPUEngine> engine_;
 
     std::vector<MemoryPiece::PtrType> parameters_;
+    Tensor paramTensor_;
     std::vector<Ptr<Vocab>> srcVocabs_;
     Ptr<Vocab> trgVocab_;
 
@@ -136,6 +137,7 @@ class GPULoadedModel {
 
     Histories Translate(const std::vector<std::string> &input);
     Histories Translate(const Ptr<data::CorpusBatch> batch);
+    Histories TranslateWithoutSwap(const Ptr<data::CorpusBatch> batch);
 };
 
 /* A model loaded on the CPU. */

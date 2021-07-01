@@ -303,8 +303,14 @@ void GPULoadedModel::PointToParams(const GPULoadedModelTrain &from) {
   ABORT_IF(engine_->myDeviceId_ != from.engine_->myDeviceId_, "TODO: copy across GPUs.");
   srcVocabs_ = from.srcVocabs_;
   trgVocab_  = from.trgVocab_;
-  // TODO: this might be wrong and could be droped in favor of using SwapPointers
-  parameters_ = from.engine_->graph_->params()->toMemoryPieces();
+  auto newParams = from.engine_->graph_->params()->vals();
+  auto newSize   = from.engine_->graph_->params()->vals()->memory()->size();
+  auto oldParams = engine_->graph_->params()->vals();
+  // auto oldSize   = engine_->graph_->params()->vals()->memory()->size();
+  swapper::copyGpuToGpu(reinterpret_cast<char *>(oldParams->memory()->data()),
+                        reinterpret_cast<char *>(newParams->memory()->data()),
+                        newSize,
+                        engine_->myDeviceId_);
 }
 
 void GPULoadedModel::Load(const CPULoadedModel &from) {
@@ -334,6 +340,7 @@ Histories GPULoadedModel::Translate(const std::vector<std::string> &input) {
   return ret;
 }
 
+// This is invoked by the self-adaptive code
 Histories GPULoadedModel::Translate(const Ptr<data::CorpusBatch> batch) {
   ABORT_IF(!trgVocab_, "GPULoadedModel needs to be overwritten by a CPU model first.");
   std::vector<uint8_t> outvec;
@@ -352,6 +359,28 @@ Histories GPULoadedModel::Translate(const Ptr<data::CorpusBatch> batch) {
 
   // LOG(info, "After translation: {}", engine_->graph_->params()->vals()->debug());
   engine_->SwapPointers(parameters_);
+  return ret;
+}
+
+// This is invoked by the self-adaptive code
+Histories GPULoadedModel::TranslateWithoutSwap(const Ptr<data::CorpusBatch> batch) {
+  ABORT_IF(!trgVocab_, "GPULoadedModel needs to be overwritten by a CPU model first.");
+  std::vector<uint8_t> outvec;
+  get(outvec, parameters_[0], engine_->graph_->getBackend());
+  // engine_->SwapPointers(parameters_);
+  // LOG(info, "Before translation: {}", engine_->graph_->params()->vals()->debug());
+
+  BeamSearch search(engine_->options_, engine_->scorers_, trgVocab_);
+  Histories ret;
+  ret.reserve(batch->size()); // TODO: input.size() was here previously, this is likely wrong
+
+  auto result = search.search(engine_->graph_, batch);
+  ret.insert(ret.end(), result.begin(), result.end());
+
+  std::sort(ret.begin(), ret.end(),[](marian::Ptr<marian::History> a, marian::Ptr<marian::History> b){return a->getLineNum() < b->getLineNum();});
+
+  // LOG(info, "After translation: {}", engine_->graph_->params()->vals()->debug());
+  // engine_->SwapPointers(parameters_);
   return ret;
 }
 

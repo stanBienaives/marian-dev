@@ -125,7 +125,7 @@ public:
         trainSlot_->Load(cpuModel_);
         trainSlot_->Train(contexts[id]);
         translateSlot_->PointToParams(*trainSlot_);
-        translate(testBatch, collector, printer);
+        translate(testBatch, collector, printer, false);
         needsSwitching_ = true;
       } else {
         LOG(info, "No context provided for sentence {}", id);
@@ -133,7 +133,7 @@ public:
           translateSlot_->Load(*cpuModel_);
           needsSwitching_ = false;
         }
-        translate(testBatch, collector, printer);
+        translate(testBatch, collector, printer, true);
       }
 
       // iterating by 1 is quite safe because the mini-batch size for
@@ -177,7 +177,7 @@ public:
         trainSlot_->Train(trainSet);
         // translateSlot_->Load(*trainSlot_);
         translateSlot_->PointToParams(*trainSlot_);
-        translate(testBatch, collector, printer);
+        translate(testBatch, collector, printer, false);
         needsSwitching_ = true;
       } else {
         LOG(info, "# EMPTY TEST BATCH");
@@ -185,7 +185,7 @@ public:
           translateSlot_->Load(*cpuModel_);
           needsSwitching_ = false;
         }
-        translate(testBatch, collector, printer);
+        translate(testBatch, collector, printer, true);
       }
     }
   }
@@ -202,8 +202,14 @@ private:
 
   void translate(Ptr<data::CorpusBatch> batch,
                  Ptr<CollectorBase> collector,
-                 Ptr<OutputPrinter> printer) {
-    auto histories = translateSlot_->Translate(batch);
+                 Ptr<OutputPrinter> printer,
+                 bool useSwap) {
+    Histories histories;
+    if (useSwap) {
+      histories = translateSlot_->Translate(batch);
+    } else {
+      histories = translateSlot_->TranslateWithoutSwap(batch);
+    }
 
     for(auto history : histories) {
       std::stringstream best1;
